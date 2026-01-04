@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Obixconfig Doctor</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+:root {
+    --bg-color-light: #f5f5f5;
+    --text-color-light: #111;
+    --card-color-light: #fff;
+
+    --bg-color-dark: #121212;
+    --text-color-dark: #eee;
+    --card-color-dark: #1e1e1e;
+}
+
+body.light {
+    background-color: var(--bg-color-light);
+    color: var(--text-color-light);
+}
+
+body.light .container, body.light .form-card, body.light .result-card {
+    background-color: var(--card-color-light);
+}
+
+body.dark {
+    background-color: var(--bg-color-dark);
+    color: var(--text-color-dark);
+}
+
+body.dark .container, body.dark .form-card, body.dark .result-card {
+    background-color: var(--card-color-dark);
+}
+
+button.toggle-theme {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    padding: 6px 12px;
+    cursor: pointer;
+}
+</style>
+
+<script>
+function copyText(id) {
+    const text = document.getElementById(id).innerText;
+    navigator.clipboard.writeText(text);
+    alert("คัดลอกไปใช้ใน Betaflight ได้แล้ว");
+}
+
+// Dark/Light toggle
+function toggleTheme() {
+    document.body.classList.toggle('dark');
+    document.body.classList.toggle('light');
+    localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+}
+
+window.onload = () => {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.body.classList.add(savedTheme);
+}
+
+function toggleConcept() {
+  const box = document.querySelector('.concept-box');
+  box.classList.toggle('open');
+}
+</script>
+</head>
+
+<script>
+const presets = {
+  beginner: `
+# OBIXConfig Lab - Beginner Preset
+set throttle_limit_percent = 85
+set dshot_bidir = OFF
+set iterm_relax = RP
+set feedforward_transition = 0
+set anti_gravity_gain = 3
+save
+`,
+
+  freestyle: `
+# OBIXConfig Lab - Freestyle Preset
+set throttle_limit_percent = 100
+set iterm_relax = RPY
+set feedforward_transition = 0.5
+set anti_gravity_gain = 5
+save
+`,
+
+  longrange: `
+# OBIXConfig Lab - Long Range Preset
+set throttle_limit_percent = 80
+set iterm_relax = OFF
+set feedforward_transition = 0
+set anti_gravity_gain = 2
+save
+`
+};
+
+function showPreset(type) {
+  document.getElementById("cliOutput").textContent = presets[type];
+}
+
+function copyCLI() {
+  const text = document.getElementById("cliOutput").textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    alert("คัดลอก CLI เรียบร้อยแล้ว 🚀");
+  });
+}
+</script>
+
+<body>
+<div class="top-bar center-logo">
+  <img src="{{ url_for('static', filename='img/obix-logo.png') }}" class="logo">
+
+  <button class="toggle-theme" onclick="toggleTheme()">🌗</button>
+</div>
+
+<div class="container">
+<div class="concept-box">
+
+  <div class="concept-header" onclick="toggleConcept()">
+    <span class="concept-title">🧠 แนวคิดการคำนวณค่า</span>
+<span class="concept-icon">📜</span>
+  </div>
+
+  <div class="concept-content" id="conceptContent">
+    <p>
+      ค่าแนะนำจาก <strong>OBIXConfig Doctor</strong><br>
+      ไม่ใช่สูตรตายตัว แต่เป็น <strong>จุดเริ่มต้นที่ปลอดภัย</strong>
+      สำหรับการจูนโดรนแต่ละลำ
+    </p>
+
+    <ul>
+      <li>🔧 คำนวณจาก <strong>ขนาด / น้ำหนัก / แบตเตอรี่ / สไตล์การบิน</strong></li>
+      <li>📊 อ้างอิงแนวคิดเดียวกับนักบิน FPV ตัวจริง</li>
+      <li>⚠️ อุปกรณ์ สภาพโดรน และการประกอบ มีผลกับค่าเสมอ</li>
+    </ul>
+
+    <p class="concept-note">
+      แนะนำให้ทดสอบบินจริง และปรับเพิ่ม–ลดเล็กน้อย<br>
+      เพื่อให้เข้ากับโดรนและสไตล์ของคุณที่สุด
+    </p>
+  </div>
+
+</div>
+
+<form method="POST" class="form-card">
+    <label>ขนาดโดรน (นิ้ว)</label>
+    <input type="number" name="size" placeholder="เช่น 5" required>
+
+    <label>น้ำหนักโดรน (กรัม)</label>
+    <input type="number" name="weight" placeholder="เช่น 950" required>
+
+    <label>แบตเตอรี่</label>
+    <select name="battery">
+        <option value="4S">4S</option>
+        <option value="6S">6S</option>
+    </select>
+
+    <label>สไตล์การบิน</label>
+    <select name="style">
+        <option value="freestyle">Freestyle</option>
+        <option value="longrange">Long Range / Cinematic</option>
+        <option value="racing">Racing</option>
+    </select>
+
+    <label>ขนาดใบพัด (นิ้ว)</label>
+    <input type="number" name="prop_size" value="5" required>
+
+    <label>จำนวนใบพัด</label>
+    <select name="blades">
+        <option value="2">2 ใบ</option>
+        <option value="3" selected>3 ใบ</option>
+        <option value="4">4 ใบ</option>
+    </select>
+
+    <label>Pitch ใบพัด</label>
+    <input type="number" step="0.1" name="pitch" value="4.0" required>
+
+    <button type="submit">วิเคราะห์</button>
+</form>
+
+{% if analysis %}
+<section class="quick-summary">
+  <div class="qs-header">
+    🧾 สรุปภาพรวม (Quick Summary)
+  </div>
+
+  <div class="qs-grid">
+    <div class="qs-item">
+      <span class="qs-label">สไตล์การบิน</span>
+      <span class="qs-value">{{ analysis.style }}</span>
+    </div>
+
+    <div class="qs-item">
+      <span class="qs-label">ระดับน้ำหนัก</span>
+      <span class="qs-value">{{ analysis.weight_class }}</span>
+    </div>
+
+    <div class="qs-item">
+      <span class="qs-label">แรงขับโดยรวม</span>
+      <span class="qs-value">{{ analysis.thrust_ratio }}</span>
+    </div>
+
+    <div class="qs-item">
+      <span class="qs-label">เวลาบินโดยประมาณ</span>
+      <span class="qs-value">{{ analysis.flight_time }} นาที</span>
+    </div>
+  </div>
+
+  <div class="qs-advice">
+    💡 <strong>คำแนะนำสั้น ๆ:</strong><br>
+    {{ analysis.summary }}
+  </div>
+
+  <div class="qs-warning">
+    ⚠️ ค่านี้เป็นค่าเริ่มต้น แนะนำทดสอบบินจริงก่อนปรับเพิ่ม–ลด
+  </div>
+</section>
+<div class="result-card">
+<h2>🔍 ผลการวิเคราะห์</h2>
+<p><strong>{{ analysis.overview }}</strong></p>
+
+<div class="preset-box">
+  <h3>🎛 Preset แนะนำจาก OBIXConfig Lab</h3>
+
+  <div class="preset-grid">
+    <div class="preset-item beginner" onclick="showPreset('beginner')">
+      <h4>🟢 Beginner / Smooth</h4>
+      <p>บินนิ่ง คุมง่าย ลดอาการสั่น เหมาะกับมือใหม่</p>
+      <ul>
+        <li>Throttle Limit: 85%</li>
+        <li>Rates: ต่ำ–กลาง</li>
+        <li>Filter: เน้นนุ่ม</li>
+      </ul>
+    </div>
+
+    <div class="preset-item freestyle" onclick="showPreset('freestyle')">
+      <h4>🔵 Freestyle</h4>
+      <p>ตอบสนองไว คุมแม่น เหมาะกับตีท่าบินสนุก</p>
+      <ul>
+        <li>Throttle Limit: 90–100%</li>
+        <li>Rates: กลาง–สูง</li>
+        <li>Filter: สมดุล</li>
+      </ul>
+    </div>
+
+    <div class="preset-item longrange" onclick="showPreset('longrange')">
+      <h4>🟣 Long-Range</h4>
+      <p>ประหยัดไฟ นิ่ง ลอยได้นาน</p>
+      <ul>
+        <li>Throttle Limit: 80–85%</li>
+        <li>Rates: ต่ำ</li>
+        <li>Filter: ประหยัดพลังงาน</li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="preset-note">
+    * Preset เหล่านี้เป็นแนวทางเริ่มต้น สามารถนำไปปรับต่อให้เหมาะกับโดรนของคุณ
+ <div class="cli-box">
+  <h3>🧠 CLI Preset (Betaflight)</h3>
+
+  <pre id="cliOutput">
+# เลือก Preset เพื่อแสดง CLI
+  </pre>
+
+  <button onclick="copyCLI()" class="copy-btn">
+    📋 Copy CLI
+  </button>
+</div>
+ </p>
+</div>
+<h3>แนวคิดการตั้งค่า</h3>
+<ul>
+{% for tip in analysis.basic_tips %}
+<li>{{ tip }}</li>
+{% endfor %}
+</ul>
+
+<h3>⚙️ PID (ค่าแนะนำ)</h3>
+<pre id="pid">
+ROLL  P {{ analysis.pid.roll.p }}  I {{ analysis.pid.roll.i }}  D {{ analysis.pid.roll.d }}
+PITCH P {{ analysis.pid.pitch.p }} I {{ analysis.pid.pitch.i }} D {{ analysis.pid.pitch.d }}
+YAW   P {{ analysis.pid.yaw.p }}   I {{ analysis.pid.yaw.i }}
+</pre>
+<button onclick="copyText('pid')">Copy PID</button>
+
+<h3>🧠 Filter</h3>
+<pre id="filter">
+Gyro LPF2: {{ analysis.filter.gyro_lpf2 }} Hz
+D-Term LPF1: {{ analysis.filter.dterm_lpf1 }} Hz
+Dynamic Notch: {{ analysis.filter.dyn_notch }}
+</pre>
+<button onclick="copyText('filter')">Copy Filter</button>
+
+<h3>🛩️ ใบพัด</h3>
+<p>{{ analysis.prop_result.summary }}</p>
+<ul>
+<li>Noise: {{ analysis.prop_result.effect.noise }}</li>
+<li>Motor Load: {{ analysis.prop_result.effect.motor_load }}</li>
+<li>Grip: {{ analysis.prop_result.effect.grip }}</li>
+<li>Recommendation: {{ analysis.prop_result.recommendation }}</li>
+</ul>
+
+<h3>💡 Extra Tools</h3>
+<p>Thrust-to-Weight Ratio: {{ analysis.thrust_ratio }}</p>
+<p>Battery Runtime Estimate: {{ analysis.battery_est }} นาที</p>
+
+<h3>📊 Visualization</h3>
+<canvas id="thrustChart" width="400" height="200"></canvas>
+<canvas id="noiseChart" width="400" height="200"></canvas>
+
+<script>
+const thrustCtx = document.getElementById('thrustChart').getContext('2d');
+new Chart(thrustCtx, {
+    type: 'bar',
+    data: {
+        labels: ['Thrust-to-Weight'],
+        datasets: [{
+            label: 'Ratio',
+            data: [{{ analysis.thrust_ratio }}],
+            backgroundColor: ['rgba(54, 162, 235, 0.6)']
+        }]
+    },
+    options: { scales: { y: { beginAtZero: true } } }
+});
+
+const noiseCtx = document.getElementById('noiseChart').getContext('2d');
+new Chart(noiseCtx, {
+    type: 'line',
+    data: {
+        labels: ['Motor Load', 'Noise Level'],
+        datasets: [{
+            label: 'Effect',
+            data: [{{ analysis.prop_result.effect.motor_load }}, {{ analysis.prop_result.effect.noise }}],
+            fill: false,
+            borderColor: 'rgb(255, 99, 132)',
+            tension: 0.3
+        }]
+    },
+    options: { scales: { y: { beginAtZero: true } } }
+});
+</script>
+
+</div>
+{% endif %}
+
+<div class="community-box">
+  <p class="community-text">
+    ตอนนี้ <strong>OBIXConfig Doctor</strong> ยังพัฒนาอยู่เรื่อย ๆ 🚧<br><br>
+
+    ถ้าคุณอยากให้เว็บไซต์<br>
+    👉 รองรับโดรนขนาดไหน<br>
+    👉 เพิ่มฟีเจอร์อะไร<br><br>
+
+    <span class="highlight">
+      สอบถามและแนะนำได้ที่เพจ<br>
+      <strong>OBIXConfig Lab</strong>
+    </span><br><br>
+
+    เพื่อชาว FPV 🇹🇭 หัวใจรักการบิน 
+  </p>
+
+  <a href="https://www.facebook.com/banmysanti/"
+     target="_blank"
+     class="community-btn">
+     ไปที่เพจ OBIXConfig Lab
+  </a>
+</div>
+
+<div class="version-note">
+  OBIXConfig Doctor • v0.9 beta (Community Build)<br>
+  Developed by real FPV pilots 🇹🇭
+</div>
+
+</div>
+</body>
+</html>
