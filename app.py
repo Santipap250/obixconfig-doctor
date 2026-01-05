@@ -6,6 +6,42 @@ from analyzer.battery_logic import analyze_battery
 app = Flask(__name__)
 
 # ===============================
+# VALIDATE INPUT
+# ===============================
+def validate_input(size, weight, prop_size, pitch, blades):
+    warnings = []
+
+    if not (1 <= size <= 10):
+        warnings.append("ขนาดโดรนควรอยู่ระหว่าง 1–10 นิ้ว")
+
+    if weight <= 0 or weight > 3000:
+        warnings.append("น้ำหนักโดรนควรอยู่ระหว่าง 1–3000 กรัม")
+
+    if prop_size > size:
+        warnings.append("ขนาดใบพัดใหญ่กว่าขนาดโดรน อาจติดเฟรม")
+
+    if not (2.0 <= pitch <= 6.5):
+        warnings.append("Pitch ใบพัดอยู่นอกช่วงที่ใช้ทั่วไป")
+
+    if blades not in [2, 3, 4]:
+        warnings.append("จำนวนใบพัดผิดปกติ")
+
+    return warnings
+
+# ===============================
+# CLASSIFY WEIGHT
+# ===============================
+def classify_weight(size, weight):
+    if size >= 5:
+        if weight < 650:
+            return "เบา"
+        elif weight <= 900:
+            return "กลาง"
+        else:
+            return "หนัก"
+    return "ไม่ระบุ"
+
+# ===============================
 # LOGIC วิเคราะห์โดรน
 # ===============================
 def analyze_drone(size, battery, style, prop_result, weight):
@@ -98,6 +134,14 @@ def index():
         blade_count = int(request.form["blades"])
         prop_pitch = float(request.form["pitch"])
 
+        warnings = validate_input(
+            size,
+            weight,
+            prop_size,
+            prop_pitch,
+            blade_count
+        )
+
         prop_result = analyze_propeller(
             prop_size, prop_pitch, blade_count, style
         )
@@ -105,6 +149,8 @@ def index():
         analysis = analyze_drone(
             size, battery, style, prop_result, weight
         )
+
+        analysis["warnings"] = warnings
         analysis["prop_result"] = prop_result
 
     return render_template("index.html", analysis=analysis)
