@@ -226,6 +226,20 @@ function copyCLI() {
 </section>
 <div class="result-card">
 <h2>🔍 ผลการวิเคราะห์</h2>
+
+{% if analysis and analysis.warnings %}
+<div class="warning-box">
+  {% for w in analysis.warnings %}
+    <div class="alert {{ w.level }}">
+      {% if w.level == "danger" %}❌{% endif %}
+      {% if w.level == "warning" %}⚠️{% endif %}
+      {% if w.level == "info" %}ℹ️{% endif %}
+      {{ w.msg }}
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
 <p><strong>{{ analysis.overview }}</strong></p>
 
 <div class="preset-box">
