@@ -153,52 +153,53 @@ function copyCLI() {
 
 <form method="POST" class="form-card">
 <!-- ===== Preset selector (OBIXPresets) ===== -->
-    <label>Preset (เลือกชุดเริ่มต้น)<label>
-    <select id="preset-select" name="preset" class="form-control">
-        <option value="">-- ไม่ใช้ preset --</option>
-        <option value="2.5_micro">2.5" — Micro</option>
-        <option value="3_whoop">3.0" — Whoop / Toothpick</option>
-        <option value="3.5_cine">3.5" — Cine</option>
-        <option value="4_mini">4.0" — Mini</option>
-       <option value="5_freestyle">5.0" — Freestyle</option>
-        <option value="6_heavy5">6.0" — Heavy</option>
-        <option value="7_midlr">7.0" — Mid / LR</option>
-        <option value="7.5_midlr">7.5" — Mid / LR</option>
-        <option value="8_lr">8.0" — Long Range</option>
-        <option value="10_lr">10" — Long Range (Big)</option>
+    <label>Preset (เลือกชุดเริ่มต้น)</label>
+<select id="preset-select" name="preset" class="form-control">
+  <option value="">-- ไม่ใช้ preset --</option>
+
+  <option value="2.5_micro" {% if request.form.get('preset','')=='2.5_micro' or (analysis and analysis.preset_used=='2.5_micro') %}selected{% endif %}>2.5" — Micro</option>
+  <option value="3_whoop"   {% if request.form.get('preset','')=='3_whoop'   or (analysis and analysis.preset_used=='3_whoop')   %}selected{% endif %}>3.0" — Whoop / Toothpick</option>
+  <option value="3.5_cine"  {% if request.form.get('preset','')=='3.5_cine'  or (analysis and analysis.preset_used=='3.5_cine')  %}selected{% endif %}>3.5" — Cine</option>
+  <option value="4_mini"    {% if request.form.get('preset','')=='4_mini'    or (analysis and analysis.preset_used=='4_mini')    %}selected{% endif %}>4.0" — Mini</option>
+  <option value="5_freestyle"{% if request.form.get('preset','')=='5_freestyle' or (analysis and analysis.preset_used=='5_freestyle')%}selected{% endif %}>5.0" — Freestyle</option>
+  <option value="6_heavy5"  {% if request.form.get('preset','')=='6_heavy5'  or (analysis and analysis.preset_used=='6_heavy5')  %}selected{% endif %}>6.0" — Heavy</option>
+  <option value="7_midlr"   {% if request.form.get('preset','')=='7_midlr'   or (analysis and analysis.preset_used=='7_midlr')   %}selected{% endif %}>7.0" — Mid / LR</option>
+  <option value="7.5_midlr" {% if request.form.get('preset','')=='7.5_midlr' or (analysis and analysis.preset_used=='7.5_midlr') %}selected{% endif %}>7.5" — Mid / LR</option>
+  <option value="8_lr"      {% if request.form.get('preset','')=='8_lr'      or (analysis and analysis.preset_used=='8_lr')      %}selected{% endif %}>8.0" — Long Range</option>
+  <option value="10_lr"     {% if request.form.get('preset','')=='10_lr'     or (analysis and analysis.preset_used=='10_lr')     %}selected{% endif %}>10" — Long Range (Big)</option>
 </select>
 <!-- ===== end preset selector ===== -->
     <label>ขนาดโดรน (นิ้ว)</label>
-    <input type="number" name="size" placeholder="เช่น 5" required>
+    <input type="number" name="size" placeholder="เช่น 5" value="{{ request.form.get('size', '') }}" required>
 
     <label>น้ำหนักโดรน (กรัม)</label>
-    <input type="number" name="weight" placeholder="เช่น 950" required>
+    <input type="number" name="weight" placeholder="เช่น 950" value="{{ request.form.get('weight', '') }}" required>
 
     <label>แบตเตอรี่</label>
     <select name="battery">
-        <option value="4S">4S</option>
-        <option value="6S">6S</option>
-    </select>
+  <option value="4S" {% if request.form.get('battery','')=='4S' %}selected{% endif %}>4S</option>
+  <option value="6S" {% if request.form.get('battery','')=='6S' %}selected{% endif %}>6S</option>
+</select>
 
     <label>สไตล์การบิน</label>
     <select name="style">
-        <option value="freestyle">Freestyle</option>
-        <option value="longrange">Long Range / Cinematic</option>
-        <option value="racing">Racing</option>
-    </select>
+  <option value="freestyle" {% if request.form.get('style','')=='freestyle' %}selected{% endif %}>Freestyle</option>
+  <option value="longrange" {% if request.form.get('style','')=='longrange' %}selected{% endif %}>Long Range / Cinematic</option>
+  <option value="racing" {% if request.form.get('style','')=='racing' %}selected{% endif %}>Racing</option>
+</select>
 
     <label>ขนาดใบพัด (นิ้ว)</label>
-    <input type="number" name="prop_size" value="5" required>
+    <input type="number" name="prop_size" value="{{ request.form.get('prop_size', '5') }}" required>
 
     <label>จำนวนใบพัด</label>
     <select name="blades">
-        <option value="2">2 ใบ</option>
-        <option value="3" selected>3 ใบ</option>
-        <option value="4">4 ใบ</option>
-    </select>
+  <option value="2" {% if request.form.get('blades','')=='2' %}selected{% endif %}>2 ใบ</option>
+  <option value="3" {% if request.form.get('blades','')=='3' %}selected{% endif %}>3 ใบ</option>
+  <option value="4" {% if request.form.get('blades','')=='4' %}selected{% endif %}>4 ใบ</option>
+</select>
 
     <label>Pitch ใบพัด</label>
-    <input type="number" step="0.1" name="pitch" value="4.0" required>
+    <input type="number" step="0.1" name="pitch" value="{{ request.form.get('pitch', '4.0') }}" required>
 
     <button type="submit">วิเคราะห์</button>
 </form>
