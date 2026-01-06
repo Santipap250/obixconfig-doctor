@@ -2,7 +2,7 @@ from flask import Flask, render_template, request
 from analyzer.prop_logic import analyze_propeller
 from analyzer.thrust_logic import calculate_thrust_weight, estimate_battery_runtime
 from analyzer.battery_logic import analyze_battery
-
+from logic.presets import PRESETS, detect_class_from_size, get_baseline_for_class
 app = Flask(__name__)
 
 # ===============================
@@ -123,35 +123,95 @@ def ping():
 # ===============================
 @app.route("/app", methods=["GET", "POST"])
 def index():
-    analysis = None
-
     if request.method == "POST":
-        size = float(request.form["size"])
-        battery = request.form["battery"]
-        style = request.form["style"]
-        weight = float(request.form.get("weight", 1.0))
-        prop_size = float(request.form["prop_size"])
-        blade_count = int(request.form["blades"])
-        prop_pitch = float(request.form["pitch"])
+    # อ่าน preset (ถ้ามี) และอ่านค่า fallback จากฟอร์ม
+    preset_key = request.form.get("preset", "").strip()
 
-        warnings = validate_input(
-            size,
-            weight,
-            prop_size,
-            prop_pitch,
-            blade_count
-        )
+    def safe_float(x, default=0.0):
+        try:
+            return float(x)
+        except Exception:
+            return default
 
-        prop_result = analyze_propeller(
-            prop_size, prop_pitch, blade_count, style
-        )
+    def safe_int(x, default=0):
+        try:
+            return int(x)
+        except Exception:
+            return default
 
-        analysis = analyze_drone(
-            size, battery, style, prop_result, weight
-        )
+    # อ่านค่าจากฟอร์ม (ใช้ fallback เดิม)
+    size = safe_float(request.form.get("size"), 5.0)
+    battery = request.form.get("battery", "4S")
+    style = request.form.get("style", "freestyle")
+    weight = safe_float(request.form.get("weight", 1.0))
+    prop_size = safe_float(request.form.get("prop_size"), 5.0)
+    blade_count = safe_int(request.form.get("blades"), 3)
+    prop_pitch = safe_float(request.form.get("pitch"), 4.0)
 
-        analysis["warnings"] = warnings
-        analysis["prop_result"] = prop_result
+    # ถ้ามี preset ให้ override ค่า input ด้วย preset
+    if preset_key:
+        p = PRESETS.get(preset_key)
+        if p:
+            size = safe_float(p.get("size", size))
+            battery = p.get("battery", battery)
+            style = p.get("style", style)
+            weight = safe_float(p.get("weight", weight))
+            prop_size = safe_float(p.get("prop_size", prop_size))
+            prop_pitch = safe_float(p.get("pitch", prop_pitch))
+            blade_count = safe_int(p.get("blades", blade_count))
+
+    # validate inputs
+    warnings = validate_input(size, weight, prop_size, prop_pitch, blade_count)
+
+    # prop analysis (ใช้ฟังก์ชันเดิม)
+    prop_result = analyze_propeller(prop_size, prop_pitch, blade_count, style)
+
+    # main analysis (ฟังก์ชันเดิม)
+    analysis = analyze_drone(size, battery, style, prop_result, weight)
+
+    # attach preset/class/baseline info (ใหม่ เพิ่มเข้าไป)
+    # detect class (detect_class_from_size อาจคืน (key, meta) ตามเวอร์ชัน)
+    try:
+        cls_det = detect_class_from_size(size)
+        if isinstance(cls_det, tuple) or isinstance(cls_det, list):
+            detected_class, class_meta = cls_det[0], cls_det[1]
+        else:
+            detected_class = cls_det
+            class_meta = {}
+    except Exception:
+        # fallback
+        detected_class = "unknown"
+        class_meta = {}
+
+    baseline_ctrl = get_baseline_for_class(detected_class) or {}
+
+    # prepare pid_baseline + filter_baseline for template
+    pid_baseline = baseline_ctrl.get("pid", {})
+    filter_baseline = baseline_ctrl.get("filter", {})
+
+    # create axis-shaped baseline for template convenience
+    P = pid_baseline.get("P", pid_baseline.get("p", 0))
+    I = pid_baseline.get("I", pid_baseline.get("i", 0))
+    D = pid_baseline.get("D", pid_baseline.get("d", 0))
+
+    analysis["preset_used"] = preset_key or "custom"
+    analysis["detected_class"] = detected_class
+    analysis["class_meta"] = class_meta
+    analysis["baseline_control"] = baseline_ctrl
+    analysis["pid_baseline"] = {
+        "roll": {"p": P, "i": I, "d": D},
+        "pitch": {"p": P, "i": I, "d": D},
+        "yaw": {"p": int(P * 0.6) if P else 0, "i": int(I * 0.6) if I else 0, "d": 0}
+    }
+    analysis["filter_baseline"] = {
+        "gyro_lpf2": filter_baseline.get("gyro_cutoff", filter_baseline.get("gyro_lpf2")),
+        "dterm_lpf1": filter_baseline.get("dterm_lowpass", filter_baseline.get("dterm_lpf1")),
+        "dyn_notch": filter_baseline.get("notch", filter_baseline.get("dyn_notch"))
+    }
+
+    # keep warnings and prop_result in analysis (เหมือนเดิม)
+    analysis["warnings"] = warnings
+    analysis["prop_result"] = prop_result
 
     return render_template("index.html", analysis=analysis)
 
