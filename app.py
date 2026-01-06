@@ -125,7 +125,8 @@ def ping():
 @app.route("/app", methods=["GET", "POST"])
 def index():
     analysis = None
-
+    
+    if request.method == "POST":
     # อ่าน preset (ถ้ามี) และอ่านค่า fallback จากฟอร์ม
     preset_key = request.form.get("preset", "").strip()
 
