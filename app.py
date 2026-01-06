@@ -3,6 +3,7 @@ from analyzer.prop_logic import analyze_propeller
 from analyzer.thrust_logic import calculate_thrust_weight, estimate_battery_runtime
 from analyzer.battery_logic import analyze_battery
 from logic.presets import PRESETS, detect_class_from_size, get_baseline_for_class
+
 app = Flask(__name__)
 
 # ===============================
@@ -123,7 +124,9 @@ def ping():
 # ===============================
 @app.route("/app", methods=["GET", "POST"])
 def index():
-    if request.method == "POST":
+    analysis = None
+
+if request.method == "POST":
     # อ่าน preset (ถ้ามี) และอ่านค่า fallback จากฟอร์ม
     preset_key = request.form.get("preset", "").strip()
 
