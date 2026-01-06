@@ -152,6 +152,22 @@ function copyCLI() {
 </div>
 
 <form method="POST" class="form-card">
+<!-- ===== Preset selector (OBIXPresets) ===== -->
+    <label>Preset (เลือกชุดเริ่มต้น)<label>
+    <select id="preset-select" name="preset" class="form-control">
+        <option value="">-- ไม่ใช้ preset --</option>
+        <option value="2.5_micro">2.5" — Micro</option>
+        <option value="3_whoop">3.0" — Whoop / Toothpick</option>
+        <option value="3.5_cine">3.5" — Cine</option>
+        <option value="4_mini">4.0" — Mini</option>
+       <option value="5_freestyle">5.0" — Freestyle</option>
+        <option value="6_heavy5">6.0" — Heavy</option>
+        <option value="7_midlr">7.0" — Mid / LR</option>
+        <option value="7.5_midlr">7.5" — Mid / LR</option>
+        <option value="8_lr">8.0" — Long Range</option>
+        <option value="10_lr">10" — Long Range (Big)</option>
+</select>
+<!-- ===== end preset selector ===== -->
     <label>ขนาดโดรน (นิ้ว)</label>
     <input type="number" name="size" placeholder="เช่น 5" required>
 
@@ -396,5 +412,55 @@ new Chart(noiseCtx, {
 </div>
 
 </div>
+<!-- OBIX Preset autofill JS -->
+<script>
+const presetMap = {
+  "2.5_micro": {size:2.5, weight:80, battery:"2S", prop_size:2.5, pitch:2.0, blades:"2", style:"micro"},
+  "3_whoop":   {size:3.0, weight:120, battery:"2S", prop_size:3.0, pitch:2.0, blades:"2", style:"whoop"},
+  "3.5_cine":  {size:3.5, weight:350, battery:"4S", prop_size:3.5, pitch:2.5, blades:"2", style:"cine"},
+  "4_mini":    {size:4.0, weight:420, battery:"4S", prop_size:4.0, pitch:3.0, blades:"2", style:"mini"},
+  "5_freestyle":{size:5.0, weight:750, battery:"4S", prop_size:5.0, pitch:4.0, blades:"3", style:"freestyle"},
+  "6_heavy5":  {size:6.0, weight:1000, battery:"4S", prop_size:6.0, pitch:4.0, blades:"3", style:"heavy"},
+  "7_midlr":   {size:7.0, weight:1100, battery:"4S", prop_size:7.0, pitch:3.5, blades:"2", style:"longrange"},
+  "7.5_midlr": {size:7.5, weight:1200, battery:"4S", prop_size:7.5, pitch:3.0, blades:"2", style:"longrange"},
+  "8_lr":      {size:8.0, weight:1500, battery:"6S", prop_size:8.0, pitch:3.5, blades:"2", style:"longrange"},
+  "10_lr":     {size:10.0, weight:2200, battery:"6S", prop_size:10.0, pitch:4.5, blades:"2", style:"longrange"}
+};
+
+// helper: set value if element exists
+function setIfExists(selector, value) {
+  const el = document.querySelector(selector);
+  if (!el) return false;
+  if (el.tagName === 'SELECT' || el.type === 'select-one') {
+    el.value = value;
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  } else {
+    el.value = value;
+  }
+  return true;
+}
+
+const presetSelect = document.getElementById('preset-select');
+if (presetSelect) {
+  presetSelect.addEventListener('change', function () {
+    const key = this.value;
+    if (!key) return;
+    const p = presetMap[key];
+    if (!p) return;
+
+    // fill fields (matches names in your form)
+    setIfExists('input[name="size"]', p.size);
+    setIfExists('input[name="weight"]', p.weight);
+    setIfExists('select[name="battery"]', p.battery);
+    setIfExists('input[name="prop_size"]', p.prop_size);
+    setIfExists('input[name="pitch"]', p.pitch);
+    setIfExists('select[name="blades"]', p.blades);
+    // style may be select or input; try both
+    setIfExists('select[name="style"]', p.style);
+    setIfExists('input[name="style"]', p.style);
+  });
+}
+</script>
+<!-- end OBIX Preset autofill JS -->
 </body>
 </html>
