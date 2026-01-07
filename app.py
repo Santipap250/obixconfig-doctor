@@ -3,6 +3,7 @@ from analyzer.prop_logic import analyze_propeller
 from analyzer.thrust_logic import calculate_thrust_weight, estimate_battery_runtime
 from analyzer.battery_logic import analyze_battery
 from logic.presets import PRESETS, detect_class_from_size, get_baseline_for_class
+from analyzer.drone_class import detect_drone_class
 
 app = Flask(__name__)
 
@@ -97,6 +98,25 @@ def analyze_drone(size, battery, style, prop_result, weight):
     )
     analysis["battery_est"] = estimate_battery_runtime(weight, battery)
 
+# --- Detect drone class and attach baseline (safe, non-destructive) ---
+    try:
+        cls_key, cls_meta = detect_drone_class(size, weight)
+        if cls_key and cls_meta:
+            # attach a readable class and meta
+            analysis["detected_class"] = cls_key
+            analysis["class_meta"] = {"description": cls_meta.get("description", "")}
+
+            # attach baseline PID/filter separately (do not overwrite analysis['pid'])
+            analysis["pid_baseline"] = cls_meta.get("pid", {})
+            analysis["filter_baseline"] = cls_meta.get("filter", {})
+
+            # small note for template / UI
+            analysis.setdefault("extra_tips", []).append(
+                f"System detected class '{cls_key}' — baseline PID/filter suggested."
+            )
+    except Exception:
+        # be tolerant: do not raise, just skip class detection
+        pass
     return analysis
 # ===============================
 # ROUTE: Landing Page
