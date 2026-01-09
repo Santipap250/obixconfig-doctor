@@ -131,6 +131,7 @@ def analyze_drone(size, battery, style, prop_result, weight):
     except Exception:
         # be tolerant: do not raise, just skip class detection
         pass
+
  # ----------------------------
     # Confidence score (0-100) + description
     # ----------------------------
@@ -183,7 +184,9 @@ def analyze_drone(size, battery, style, prop_result, weight):
         analysis["confidence_score"] = 0
         analysis["confidence_level"] = "UNKNOWN"
         analysis["confidence_desc"] = "ไม่สามารถคำนวณความเชื่อมั่นได้"
+
    return analysis
+
 # ===============================
 # ROUTE: Landing Page
 # ===============================
