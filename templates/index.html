@@ -258,19 +258,53 @@ function copyCLI() {
 
   <h4>🎯 ค่าเริ่มต้น (Baseline) ที่ระบบแนะนำ</h4>
 
-  <p><strong>PID Baseline</strong></p>
-  <pre>
+  <div style="margin-bottom:8px;">
+    <p><strong>PID Baseline</strong></p>
+    <pre id="pid-baseline" class="code-block">
 ROLL  P {{ analysis.pid_baseline.roll.p }}  I {{ analysis.pid_baseline.roll.i }}  D {{ analysis.pid_baseline.roll.d }}
 PITCH P {{ analysis.pid_baseline.pitch.p }} I {{ analysis.pid_baseline.pitch.i }} D {{ analysis.pid_baseline.pitch.d }}
 YAW   P {{ analysis.pid_baseline.yaw.p }}   I {{ analysis.pid_baseline.yaw.i }}
-  </pre>
+    </pre>
 
-  <p><strong>Filter Baseline</strong></p>
-  <pre>
+    <div style="margin-top:6px;">
+      <button onclick="copyText('pid-baseline')">Copy PID Baseline</button>
+      <button id="use-baseline-cli" type="button">Use baseline as CLI</button>
+    </div>
+  </div>
+
+  <div style="margin-top:12px;">
+    <p><strong>Filter Baseline</strong></p>
+    <pre id="filter-baseline">
 Gyro LPF2: {{ analysis.filter_baseline.gyro_lpf2 }} Hz
 D-Term LPF1: {{ analysis.filter_baseline.dterm_lpf1 }} Hz
 Dynamic Notch: {{ analysis.filter_baseline.dyn_notch }}
-  </pre>
+    </pre>
+    <div style="margin-top:6px;">
+      <button onclick="copyText('filter-baseline')">Copy Filter Baseline</button>
+    </div>
+  </div>
+
+  <!-- CLI preview modal (hidden by default) -->
+  <div id="cliModal" style="display:none; position:fixed; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999;">
+    <div style="max-width:900px; margin:60px auto; background:#fff; padding:18px; border-radius:8px; box-shadow:0 8px 30px rgba(0,0,0,0.3);">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+        <h3 style="margin:0">OBIXConfig — Generated CLI (class baseline)</h3>
+        <button id="closeCliModal" style="padding:6px 10px;">Close</button>
+      </div>
+
+      <p style="margin:8px 0 12px; color:#333;">
+        ข้อความด้านล่างคือบล็อกค่าพื้นฐานที่สร้างจาก baseline ของ class — สามารถคัดลอกแล้วแปลงเป็นคำสั่ง Betaflight CLI ได้เอง (โปรดตรวจสอบชื่อพารามิเตอร์ตามเวอร์ชัน Betaflight ก่อนนำไปใช้จริง)
+      </p>
+
+      <pre id="cliModalOutput" style="white-space:pre-wrap; background:#f7f7f7; padding:12px; border-radius:6px; max-height:360px; overflow:auto;"></pre>
+
+      <div style="display:flex; gap:8px; margin-top:12px;">
+        <button id="copyCliBtn">Copy CLI to clipboard</button>
+        <button id="downloadCliBtn">Download as text</button>
+        <button id="closeCliBtn2">Close</button>
+      </div>
+    </div>
+  </div>
 
   <p style="font-size:0.9em; opacity:0.85;">
     ⚠️ ค่านี้คือ <strong>จุดเริ่มต้นที่ปลอดภัย</strong><br>
@@ -499,6 +533,89 @@ if (presetSelect) {
     setIfExists('input[name="style"]', p.style);
   });
 }
+</script>
+<script>
+function el(id){ return document.getElementById(id); }
+
+function buildBaselineCLI() {
+  const lines = [];
+  lines.push("# OBIXConfig Lab - Baseline (class-based)");
+  lines.push("# NOTE: This output contains numeric baseline values. Map them to your Betaflight parameters (check version).");
+  lines.push("");
+
+  const pidText = el("pid-baseline") ? el("pid-baseline").innerText.trim() : "";
+  if (pidText) {
+    lines.push("# PID (baseline)");
+    pidText.split('\n').forEach(l => lines.push(l.trim()));
+    lines.push("");
+  }
+
+  const filterEl = el("filter-baseline");
+  if (filterEl) {
+    lines.push("# Filter (baseline)");
+    filterEl.innerText.trim().split('\n').forEach(l => lines.push(l.trim()));
+    lines.push("");
+  }
+
+  lines.push("# Suggested mapping example (manual):");
+  lines.push("# - Roll P/I/D  -> map to PID slots for Roll in Betaflight (e.g. set pid_roll = <P> etc.)");
+  lines.push("# - Pitch P/I/D -> map to Pitch");
+  lines.push("# - Yaw P/I     -> map to Yaw (D often 0 for yaw)");
+  lines.push("# - Filters: set gyro_lpf2, dterm_lpf1 according to your Betaflight version");
+  lines.push("");
+  lines.push("# After mapping, use 'save' in Betaflight CLI to persist changes");
+  lines.push("");
+  return lines.join("\n");
+}
+
+function showCliModal(cliText) {
+  const modal = el("cliModal");
+  const out = el("cliModalOutput");
+  if(!modal || !out) return;
+  out.textContent = cliText;
+  modal.style.display = "block";
+}
+
+function closeCliModal() {
+  const modal = el("cliModal");
+  if(modal) modal.style.display = "none";
+}
+
+function copyCliToClipboard() {
+  const out = el("cliModalOutput");
+  if(!out) return;
+  navigator.clipboard.writeText(out.textContent).then(()=>{
+    alert("CLI ถูกคัดลอกไปยังคลิปบอร์ดแล้ว — วางใน Betaflight CLI หรือไฟล์ตามต้องการ");
+  }).catch(()=>{
+    alert("คัดลอกไม่สำเร็จ ลองคัดลอกด้วยมือจากกล่อง CLI ด้านล่าง");
+  });
+}
+
+function downloadCliFile() {
+  const text = el("cliModalOutput").textContent || "";
+  const blob = new Blob([text], {type: "text/plain;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "obix_baseline_cli.txt";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+document.addEventListener("DOMContentLoaded", function(){
+  const btn = el("use-baseline-cli");
+  if(btn) btn.addEventListener('click', function(){
+    const cli = buildBaselineCLI();
+    showCliModal(cli);
+  });
+
+  el("closeCliModal")?.addEventListener("click", closeCliModal);
+  el("closeCliBtn2")?.addEventListener("click", closeCliModal);
+  el("copyCliBtn")?.addEventListener("click", copyCliToClipboard);
+  el("downloadCliBtn")?.addEventListener("click", downloadCliFile);
+});
 </script>
 <!-- end OBIX Preset autofill JS -->
 </body>
