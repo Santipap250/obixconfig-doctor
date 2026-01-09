@@ -8,6 +8,20 @@ from analyzer.drone_class import detect_drone_class
 app = Flask(__name__)
 
 # ===============================
+# SECURITY / CONFIG
+# ===============================
+import os
+
+# ใช้ SECRET_KEY จาก environment (ห้าม hardcode ใน production)
+app.config["SECRET_KEY"] = os.environ.get(
+    "SECRET_KEY",
+    "dev-only-change-me"
+)
+
+# ปลอดภัยขึ้น เวลามี session / cookie
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+# ===============================
 # VALIDATE INPUT
 # ===============================
 def validate_input(size, weight, prop_size, pitch, blades):
