@@ -131,7 +131,59 @@ def analyze_drone(size, battery, style, prop_result, weight):
     except Exception:
         # be tolerant: do not raise, just skip class detection
         pass
-    return analysis
+ # ----------------------------
+    # Confidence score (0-100) + description
+    # ----------------------------
+    try:
+        # try to read class meta or baseline data
+        cls_meta = analysis.get("class_meta", {}) or {}
+        baseline = analysis.get("baseline_control", {}) or {}
+
+        max_w = baseline.get("max_weight") or cls_meta.get("max_weight")
+        min_s = baseline.get("min_size") or cls_meta.get("min_size")
+        max_s = baseline.get("max_size") or cls_meta.get("max_size")
+
+        score = 100
+        # weight penalty
+        if max_w:
+            try:
+                w_ratio = float(weight) / float(max_w)
+                w_penalty = min(max(w_ratio, 0), 2.0) * 40  # up to 80 penalty
+                score -= w_penalty
+            except Exception:
+                pass
+
+        # size distance penalty
+        if min_s is not None and max_s is not None:
+            try:
+                center = (float(min_s) + float(max_s)) / 2.0
+                span = (float(max_s) - float(min_s)) / 2.0 or 1.0
+                dist = abs(size - center) / span
+                dist_penalty = min(dist, 2.0) * 30  # up to 60 penalty
+                score -= dist_penalty
+            except Exception:
+                pass
+
+        score = max(0, min(100, int(score)))
+
+        if score >= 70:
+            level = "HIGH"
+            desc = "ค่ามีความสอดคล้องกับ class ที่ตรวจเจอ — เหมาะสำหรับทดสอบและใช้งานทั่วไป"
+        elif score >= 40:
+            level = "MEDIUM"
+            desc = "ค่าเริ่มต้นที่ใช้ได้ — แนะนำทดสอบและสังเกต vibration ก่อนใช้งานจริง"
+        else:
+            level = "LOW"
+            desc = "ความเสี่ยงสูง — ทดสอบด้วยความระมัดระวังและไม่ควรบินระยะไกล/ส่งงาน"
+
+        analysis["confidence_score"] = score
+        analysis["confidence_level"] = level
+        analysis["confidence_desc"] = desc
+    except Exception:
+        analysis["confidence_score"] = 0
+        analysis["confidence_level"] = "UNKNOWN"
+        analysis["confidence_desc"] = "ไม่สามารถคำนวณความเชื่อมั่นได้"
+   return analysis
 # ===============================
 # ROUTE: Landing Page
 # ===============================
