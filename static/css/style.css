@@ -496,3 +496,29 @@ max-height: 220px;
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(46,160,67,0.45);
 }
+
+.warning-box {
+    margin: 15px 0;
+}
+
+.alert {
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.alert.danger {
+    background: #ffebee;
+    color: #b71c1c;
+}
+
+.alert.warning {
+    background: #fff8e1;
+    color: #e65100;
+}
+
+.alert.info {
+    background: #e3f2fd;
+    color: #0d47a1;
+}
