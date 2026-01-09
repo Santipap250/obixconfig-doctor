@@ -231,21 +231,21 @@ function copyCLI() {
       <span class="qs-value">{{ analysis.flight_time }} นาที</span>
     </div>
   </div>
-
   <div class="qs-advice">
    💡 <strong>คำแนะนำสั้น ๆ:</strong><br>
     {{ analysis.summary }}
-  </div>
-  <div class="qs-warning">
-    ⚠️ ค่านี้เป็นค่าเริ่มต้น แนะนำทดสอบบินจริงก่อนปรับเพิ่ม–ลด
-  </div>
-<div class="confidence-box" style="margin-top:10px; padding:10px; border-radius:8px; background:#fff3cd; color:#856404;">
+     </div>
+  <div class="confidence-box" style="margin-top:10px; padding:10px; border-radius:8px; background:#fff3cd; color:#856404;">
   <strong>🔐 ระดับความมั่นใจ:</strong>
   <span style="font-weight:700">{{ analysis.confidence_level }}</span>
   ({{ analysis.confidence_score }}%)<br>
   <small>{{ analysis.confidence_desc }}</small>
 </div>
 </section>
+   <div class="qs-warning">
+    ⚠️ ค่านี้เป็นค่าเริ่มต้น แนะนำทดสอบบินจริงก่อนปรับเพิ่ม–ลด
+  </div>
+
 <!-- ===== OBIX Detected Class & Baseline (Optional but Recommended) ===== -->
 {% if analysis.detected_class %}
 <div class="result-card" style="border-left:4px solid #4CAF50;">
