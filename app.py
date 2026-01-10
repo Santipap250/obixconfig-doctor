@@ -4,6 +4,7 @@ from analyzer.thrust_logic import calculate_thrust_weight, estimate_battery_runt
 from analyzer.battery_logic import analyze_battery
 from logic.presets import PRESETS, detect_class_from_size, get_baseline_for_class
 from analyzer.drone_class import detect_drone_class
+import traceback
 
 app = Flask(__name__)
 
@@ -261,17 +262,35 @@ def index():
         except Exception:
             prop_result = {"summary": "prop analysis not available", "effect": {"motor_load": 0, "noise": 0}, "recommendation": ""}
 
-        # main analysis
+        # main analysis (robust: catch exceptions and ensure analysis is a dict)
         try:
             analysis = analyze_drone(size, battery, style, prop_result, weight)
+
+            # guard: if analyze_drone returned None or non-dict, fallback
+            if not isinstance(analysis, dict):
+                app.logger.error("analyze_drone returned non-dict: %r", analysis)
+                analysis = {
+                    "style": style,
+                    "weight_class": "unknown",
+                    "thrust_ratio": 0,
+                    "flight_time": 0,
+                    "summary": "analysis fallback (invalid return)",
+                    "basic_tips": []
+                }
+
         except Exception:
+            tb = traceback.format_exc()
+            app.logger.error("Exception in analyze_drone:\n%s", tb)
+            # fallback analysis (include internal_trace for dev debugging)
             analysis = {
                 "style": style,
                 "weight_class": "unknown",
                 "thrust_ratio": 0,
                 "flight_time": 0,
                 "summary": "analysis fallback (internal error)",
-                "basic_tips": []
+                "basic_tips": [],
+                "internal_error": True,
+                "internal_trace": tb
             }
 
         # detect class (some versions return tuple)
