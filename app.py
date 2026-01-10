@@ -66,8 +66,7 @@ def analyze_drone(size, battery, style, prop_result, weight):
     analysis["overview"] = (
         f'โดรน {size}" แบต {battery}, สไตล์ {style}, ใบพัด: {prop_result["summary"]}'
     )
-
-   analysis["summary"] = analysis["overview"]
+    analysis["summary"] = analysis["overview"]
     analysis["weight_class"] = classify_weight(size, weight)
 
     analysis["basic_tips"] = [
