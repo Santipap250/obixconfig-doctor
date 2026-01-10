@@ -184,6 +184,7 @@ def analyze_drone(size, battery, style, prop_result, weight):
         analysis["confidence_score"] = 0
         analysis["confidence_level"] = "UNKNOWN"
         analysis["confidence_desc"] = "ไม่สามารถคำนวณความเชื่อมั่นได้"
+
         return analysis
 
 # ===============================
