@@ -261,7 +261,6 @@ def index():
             prop_result = analyze_propeller(prop_size, prop_pitch, blade_count, style)
         except Exception:
             prop_result = {"summary": "prop analysis not available", "effect": {"motor_load": 0, "noise": 0}, "recommendation": ""}
-
         # main analysis (robust: catch exceptions and ensure analysis is a dict)
         try:
             analysis = analyze_drone(size, battery, style, prop_result, weight)
