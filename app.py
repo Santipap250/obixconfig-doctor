@@ -186,7 +186,8 @@ def analyze_drone(size, battery, style, prop_result, weight):
         analysis["confidence_level"] = "UNKNOWN"
         analysis["confidence_desc"] = "ไม่สามารถคำนวณความเชื่อมั่นได้"
 
-        return analysis
+    # <-- make sure return is OUTSIDE the except (same indent as start of function body)
+    return analysis
 
 # ===============================
 # ROUTE: Landing Page
